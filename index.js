@@ -36,6 +36,7 @@ const {
     getCustomHooks
 } = require('./lib/custom');
 const { pull, push, getConfig, logCommits, generateChangelog } = require('./lib/git');
+const askDeploy = require('./lib/askDeploy');
 const buildRemote = require('./lib/buildRemote');
 
 const PKG = require(path.join(process.cwd(), 'package.json'));
@@ -261,15 +262,24 @@ if (argv._.includes('log-commits')) {
         return branch;
     };
 
-    const { branch, flow: flowType, custom } = argv;
+    const { branch, flow, custom, website } = argv;
     debug(argv, 'arguments');
     const branchName = parseEnv(branch, argv.website);
-    return logCommits(branchName, flowType, argv.website).then((data) => {
-        if (/deploy-(beta|prod|old|tor|dev)/.test(branchName)) {
-            const [, env] = branchName.match(/deploy-(beta|prod|old|tor|dev)/);
-            coucou.send(data, { env, flowType, custom }, PKG);
-        }
-    });
+
+    return askDeploy(
+        {
+            branch: branchName,
+            flow,
+            website
+        },
+        PKG
+    );
+    // return logCommits(branchName, flowType, argv.website).then((data) => {
+    //     if (/deploy-(beta|prod|old|tor|dev)/.test(branchName)) {
+    //         const [, env] = branchName.match(/deploy-(beta|prod|old|tor|dev)/);
+    //         coucou.send(data, { env, flowType, custom }, PKG);
+    //     }
+    // });
 }
 
 if (argv._.includes('changelog')) {
